@@ -9,17 +9,35 @@
     #form { display: flex; }
     #input { flex: 1; padding: 10px; }
     #send { padding: 10px; }
+    #user-container { margin-bottom: 20px; }
+    #user-info { display: none; }
+    #sign-in-container { display: flex; flex-direction: column; }
+    #sign-in-container input { margin-bottom: 10px; padding: 10px; }
   </style>
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js"></script>
 </head>
 <body>
+  <div id="user-container">
+    <div id="user-info">
+      <p id="user-name"></p>
+      <button id="sign-out">Sign Out</button>
+    </div>
+    <div id="sign-in-container">
+      <input type="email" id="email" placeholder="Email">
+      <input type="password" id="password" placeholder="Password">
+      <button id="sign-in">Sign In</button>
+      <button id="sign-up">Sign Up</button>
+    </div>
+  </div>
   <ul id="messages"></ul>
   <form id="form" action="">
     <input id="input" autocomplete="off" /><button id="send">Send</button>
   </form>
   <script>
-    const firebaseConfig = {
+    // Your Firebase configuration
+     const firebaseConfig = {
     apiKey: "AIzaSyDXhkAUtwtFuOO1M9qYL9eM75Kho8_XubE",
     authDomain: "agpals.firebaseapp.com",
     projectId: "agpals",
@@ -27,12 +45,61 @@
     messagingSenderId: "297912076337",
     appId: "1:297912076337:web:49b1298789d38c5010ad10",
     measurementId: "G-WFC7WR1VD9"
+
   };
+
+   
 
     // Initialize Firebase
     const app = firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
     const db = firebase.firestore();
 
+    // Elements
+    const userContainer = document.getElementById('user-container');
+    const userInfo = document.getElementById('user-info');
+    const userName = document.getElementById('user-name');
+    const signInContainer = document.getElementById('sign-in-container');
+    const emailInput = document.getElementById('email');
+    const passwordInput = document.getElementById('password');
+    const signInButton = document.getElementById('sign-in');
+    const signUpButton = document.getElementById('sign-up');
+    const signOutButton = document.getElementById('sign-out');
+
+    // Sign In
+    signInButton.addEventListener('click', () => {
+      const email = emailInput.value;
+      const password = passwordInput.value;
+      auth.signInWithEmailAndPassword(email, password)
+        .catch(error => console.error('Error signing in:', error));
+    });
+
+    // Sign Up
+    signUpButton.addEventListener('click', () => {
+      const email = emailInput.value;
+      const password = passwordInput.value;
+      auth.createUserWithEmailAndPassword(email, password)
+        .catch(error => console.error('Error signing up:', error));
+    });
+
+    // Sign Out
+    signOutButton.addEventListener('click', () => {
+      auth.signOut();
+    });
+
+    // Auth State Listener
+    auth.onAuthStateChanged(user => {
+      if (user) {
+        userInfo.style.display = 'block';
+        signInContainer.style.display = 'none';
+        userName.textContent = `Hello, ${user.email}`;
+      } else {
+        userInfo.style.display = 'none';
+        signInContainer.style.display = 'block';
+      }
+    });
+
+    // Chat Functionality
     const messages = document.getElementById('messages');
     const form = document.getElementById('form');
     const input = document.getElementById('input');
@@ -42,7 +109,8 @@
       if (input.value) {
         db.collection('messages').add({
           text: input.value,
-          timestamp: firebase.firestore.FieldValue.serverTimestamp()
+          timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+          user: auth.currentUser.email
         });
         input.value = '';
       }
@@ -52,10 +120,11 @@
       messages.innerHTML = '';
       snapshot.forEach(doc => {
         const item = document.createElement('li');
-        item.textContent = doc.data().text;
+        item.textContent = `${doc.data().user}: ${doc.data().text}`;
         messages.appendChild(item);
       });
     });
   </script>
 </body>
 </html>
+
