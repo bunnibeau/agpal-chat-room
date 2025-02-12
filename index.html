@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Chat Room</title>
+  <style>
+    body { font-family: Arial, sans-serif; }
+    #messages { list-style-type: none; margin: 0; padding: 0; }
+    #messages li { padding: 8px; margin-bottom: 10px; background-color: #f4f4f4; }
+    #form { display: flex; }
+    #input { flex: 1; padding: 10px; }
+    #send { padding: 10px; }
+  </style>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js"></script>
+</head>
+<body>
+  <ul id="messages"></ul>
+  <form id="form" action="">
+    <input id="input" autocomplete="off" /><button id="send">Send</button>
+  </form>
+  <script>
+    const firebaseConfig = {
+    apiKey: "AIzaSyDXhkAUtwtFuOO1M9qYL9eM75Kho8_XubE",
+    authDomain: "agpals.firebaseapp.com",
+    projectId: "agpals",
+    storageBucket: "agpals.firebasestorage.app",
+    messagingSenderId: "297912076337",
+    appId: "1:297912076337:web:49b1298789d38c5010ad10",
+    measurementId: "G-WFC7WR1VD9"
+  };
+
+    // Initialize Firebase
+    const app = firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    const messages = document.getElementById('messages');
+    const form = document.getElementById('form');
+    const input = document.getElementById('input');
+
+    form.addEventListener('submit', function(e) {
+      e.preventDefault();
+      if (input.value) {
+        db.collection('messages').add({
+          text: input.value,
+          timestamp: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        input.value = '';
+      }
+    });
+
+    db.collection('messages').orderBy('timestamp').onSnapshot(snapshot => {
+      messages.innerHTML = '';
+      snapshot.forEach(doc => {
+        const item = document.createElement('li');
+        item.textContent = doc.data().text;
+        messages.appendChild(item);
+      });
+    });
+  </script>
+</body>
+</html>
